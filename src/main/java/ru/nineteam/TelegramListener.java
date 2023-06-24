@@ -3,13 +3,8 @@ package ru.nineteam;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.format.TextDecoration;
-import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -19,7 +14,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -39,12 +33,7 @@ public class TelegramListener implements Runnable {
         this.token = token;
         this.chatId = chat_id;
         this.proxyServer = proxyServer;
-        for (Iterator<RegisteredServer> it = proxyServer.getAllServers().iterator(); it.hasNext(); ) {
-            var srv = it.next();
-            final TextComponent textComponent = Component.text("Nigger;");
 
-            srv.sendMessage(textComponent);
-        }
     }
     static String urlEncodeUTF8(String s) {
         try {
@@ -92,7 +81,6 @@ public class TelegramListener implements Runnable {
                 var updates = answer.getResult();
                 for (var update : updates) {
                     if (update.getUpdateId() >= lastUpdateId) lastUpdateId = update.getUpdateId()+1;
-                    Long threadId = 0L;
                     TelegramMessage msg = new TelegramMessage();
                     if (update.getMessage() != null) msg = update.getMessage();
                     if (update.getEditedMessage() != null) msg = update.getEditedMessage();
@@ -104,7 +92,7 @@ public class TelegramListener implements Runnable {
 
                             if (optServer.isPresent()) {
                                 TelegramUser user = finalMsg.getFrom();
-                                String fmtString = ("[TG] %s %s: %s").formatted(user.getFirstName(), user.getLastName(), finalMsg.getText());
+                                String fmtString = config.getStrings().toMinecraftMessage.formatted(user.getFirstName(), user.getLastName(), finalMsg.getText());
                                 final TextComponent textComponent = Component.text(fmtString);
                                 optServer.get().sendMessage(textComponent);
                             }

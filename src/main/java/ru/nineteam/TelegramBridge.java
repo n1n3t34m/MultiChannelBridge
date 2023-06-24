@@ -35,6 +35,7 @@ public class TelegramBridge {
     private final Logger logger;
     String regex = "(?s)`([^`]*)`|(\\*\\*|[_~])((?:(?!\\2).)*)\\2";
     Path dataDirectory;
+
     @Inject
     public TelegramBridge(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
         this.dataDirectory = dataDirectory;
@@ -43,7 +44,6 @@ public class TelegramBridge {
         String token = "";
         long chat_id = 0L;
         logger.info(String.valueOf(dataDirectory.toAbsolutePath()));
-        //private long TelegramChatId = -1001629242284L;
         config = new Config();
         Gson gson = new Gson();
         if (!new File(dataDirectory+".json").exists()) {
@@ -74,10 +74,11 @@ public class TelegramBridge {
         var text = event.getMessage();
         var playerName = event.getPlayer().getUsername();
         var serverName = server.getServerInfo().getName();
-        String message = String.format("[%s] &lt;<b>%s</b>&gt;: %s", serverName, playerName, text);
+        String message = config.getStrings().fromMinecraftMessage.formatted(serverName, playerName, text);
         System.out.println(message);
         try {
-            var s = sender.sendMessage(TelegramChatId, message, "HTML", config.getServers().get("lobby"));
+            String srvName = fromServer.get().getServerInfo().getName();
+            var s = sender.sendMessage(TelegramChatId, message, "HTML", config.getServers().get(srvName));
             System.out.println(s);
         } catch (IOException | InterruptedException | ParseException e) {
             System.err.println(e.getMessage());
@@ -92,14 +93,15 @@ public class TelegramBridge {
         var serverName = server.getServerInfo().getName();
         var message = "";
         if (event.getPreviousServer().isEmpty()) {
-            message = String.format("[%s] <b>%s</b> joined.", serverName, playerName);
+            message = config.getStrings().clientJoined.formatted(serverName, playerName);
         } else {
-            var srv = event.getPreviousServer().get().getServerInfo();
-            message = String.format("[%s] <b>%s</b> joined via %s.", serverName, playerName, srv.getName());
+            var previousServerName = event.getPreviousServer().get().getServerInfo().getName();
+            message = config.getStrings().clientJoinedVia.formatted(serverName, playerName, previousServerName);
         }
         System.out.println(message);
         try {
-            var s = sender.sendMessage(TelegramChatId, message, "HTML", config.getServers().get("lobby"));
+            String srvName = server.getServerInfo().getName();
+            var s = sender.sendMessage(TelegramChatId, message, "HTML", config.getServers().get(srvName));
             System.out.println(s);
         } catch (IOException | InterruptedException | ParseException e) {
             System.err.println(e.getMessage());
