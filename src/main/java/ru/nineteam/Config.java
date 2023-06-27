@@ -9,7 +9,7 @@ import java.io.*;
 import java.util.HashMap;
 
 public class Config {
-
+    private Long TelegramTimeout;
     private String TelegramToken;
     private Long TelegramChatId;
 
@@ -56,5 +56,13 @@ public class Config {
 
     public void setTelegramChatId(Long telegramChatId) {
         TelegramChatId = telegramChatId;
+    }
+
+    public Long getTelegramTimeout() {
+        return TelegramTimeout;
+    }
+
+    public void setTelegramTimeout(Long telegramTimeout) {
+        TelegramTimeout = telegramTimeout;
     }
 }

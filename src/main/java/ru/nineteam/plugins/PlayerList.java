@@ -13,6 +13,7 @@ public class PlayerList implements IMessageReceiver {
 
     @Override
     public boolean onTelegramObjectMessage(@Nonnull TelegramMessage messageObject) {
+        if (!messageObject.getText().startsWith("/players")) return false;
         var proxyServer = TelegramBridge.getInstance().getProxyServer();
         var sender = TelegramBridge.getInstance().getSender();
         List<String> cmdArgs = List.of(messageObject.getText().split(" "));

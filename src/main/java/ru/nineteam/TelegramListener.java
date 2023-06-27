@@ -75,6 +75,7 @@ public class TelegramListener implements Runnable {
             var args = new HashMap<String, String>();
             args.put("chat_id", String.valueOf(chatId));
             args.put("offset", String.valueOf(lastUpdateId));
+            args.put("timeout", String.valueOf(config.getTelegramTimeout()));
             var encoded = urlEncodeUTF8(args);
             String api_url = "https://api.telegram.org/bot%s/%s?%s";
             var uri = api_url.formatted(token, "getUpdates", encoded);

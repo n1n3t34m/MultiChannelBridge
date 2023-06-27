@@ -12,6 +12,7 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import ru.nineteam.plugins.PlayerList;
+import ru.nineteam.plugins.ServerList;
 import ru.nineteam.plugins.ToMinecraft;
 
 import javax.inject.Inject;
@@ -92,6 +93,7 @@ public class TelegramBridge {
         instance = this;
         listener.receivers.add(new PlayerList());
         listener.receivers.add(new ToMinecraft());
+        listener.receivers.add(new ServerList());
         new Thread(listener).start();
     }
     @Subscribe
