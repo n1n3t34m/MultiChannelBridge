@@ -17,7 +17,6 @@ public class ToMinecraft implements IMessageReceiver {
         cfg.getServers().forEach((serverName, messageThreadId) -> {
             if (messageObject.getMessageThreadId().equals(messageThreadId)) {
                 var optServer = bridge.getProxyServer().getServer(serverName);
-
                 if (optServer.isPresent()) {
                     TelegramUser user = messageObject.getFrom();
                     String fmtString = cfg.getStrings().toMinecraftMessage.formatted(user.getFirstName(), user.getLastName(), messageObject.getText());

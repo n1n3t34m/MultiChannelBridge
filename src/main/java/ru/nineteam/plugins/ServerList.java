@@ -17,8 +17,8 @@ public class ServerList implements IMessageReceiver {
     public static boolean hostAvailabilityCheck(InetAddress serverAddress, int serverPort) {
         try (Socket s = new Socket(serverAddress, serverPort)) {
             return true;
-        } catch (IOException ex) {
-            /* ignore */
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return false;
     }

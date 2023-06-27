@@ -8,10 +8,8 @@ public class TelegramMessage {
     @SerializedName("message_id")
     private Long messageId = 0L;
 
-
-
     @SerializedName("message_thread_id")
-    private Long messageThreadId = 0L;
+    private Long messageThreadId = 1L;
     @SerializedName("from")
     private TelegramUser from = null;
     @SerializedName("date")

@@ -54,6 +54,7 @@ public class TelegramSender {
                 .uri(URI.create(uri))
                 .build();
         HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+        System.out.println(resp.body());
         return (JSONObject) parser.parse(resp.body());
     }
     static String urlEncodeUTF8(String s) {

@@ -59,6 +59,7 @@ public class TelegramListener implements Runnable {
         TelegramMessage msg = new TelegramMessage();
         if (update.getMessage() != null) msg = update.getMessage();
         if (update.getEditedMessage() != null) msg = update.getEditedMessage();
+        if (msg.getChat().getId() != chatId) return;
         for (IMessageReceiver r : receivers) {
             r.onTelegramObjectMessage(msg);
         }
@@ -73,7 +74,6 @@ public class TelegramListener implements Runnable {
                 e.printStackTrace();
             }
             var args = new HashMap<String, String>();
-            args.put("chat_id", String.valueOf(chatId));
             args.put("offset", String.valueOf(lastUpdateId));
             args.put("timeout", String.valueOf(config.getTelegramTimeout()));
             var encoded = urlEncodeUTF8(args);
