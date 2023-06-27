@@ -3,44 +3,43 @@ package ru.nineteam;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.velocitypowered.api.proxy.ProxyServer;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 
+
+import javax.annotation.Nullable;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class TelegramListener implements Runnable {
+    TelegramBridge bridge;
     long chatId;
     long lastUpdateId = -1;
     String token;
     Config config;
     ProxyServer proxyServer;
     HttpClient client = HttpClient.newHttpClient();
-    final private String api_url = "https://api.telegram.org/bot%s/%s?%s";
+    final List<IMessageReceiver> receivers = new ArrayList<>();
 
 
 
-    public TelegramListener(long chat_id, String token, ProxyServer proxyServer, Config config) {
+    public TelegramListener(long chat_id, String token, ProxyServer proxyServer, Config config, TelegramBridge bridge) {
+
         this.config = config;
         this.token = token;
         this.chatId = chat_id;
         this.proxyServer = proxyServer;
-
+        this.bridge = bridge;
     }
     static String urlEncodeUTF8(String s) {
-        try {
-            return URLEncoder.encode(s, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new UnsupportedOperationException(e);
-        }
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
     public static String urlEncodeUTF8(Map<?,?> map) {
         StringBuilder sb = new StringBuilder();
@@ -55,7 +54,16 @@ public class TelegramListener implements Runnable {
         }
         return sb.toString();
     }
+    private void processUpdate(@Nullable TelegramUpdate update) {
+        if (update == null) return;
+        TelegramMessage msg = new TelegramMessage();
+        if (update.getMessage() != null) msg = update.getMessage();
+        if (update.getEditedMessage() != null) msg = update.getEditedMessage();
+        for (IMessageReceiver r : receivers) {
+            r.onTelegramObjectMessage(msg);
+        }
 
+    }
     public void run() {
         Gson parser = new Gson();
         while(true) {
@@ -68,37 +76,21 @@ public class TelegramListener implements Runnable {
             args.put("chat_id", String.valueOf(chatId));
             args.put("offset", String.valueOf(lastUpdateId));
             var encoded = urlEncodeUTF8(args);
+            String api_url = "https://api.telegram.org/bot%s/%s?%s";
             var uri = api_url.formatted(token, "getUpdates", encoded);
-            System.out.println(uri);
+            System.out.println(uri.replace(token, "<TOKEN>"));
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(uri))
                     .build();
             try {
                 HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
                 String text = resp.body();
-                System.out.println("ASDAJHSDKGHSDJKGASHJDGJASD+ "+text);
+
                 TelegramAnswer<List<TelegramUpdate>> answer = parser.fromJson(text, new TypeToken<TelegramAnswer<List<TelegramUpdate>>>() {}.getType());
                 var updates = answer.getResult();
                 for (var update : updates) {
                     if (update.getUpdateId() >= lastUpdateId) lastUpdateId = update.getUpdateId()+1;
-                    TelegramMessage msg = new TelegramMessage();
-                    if (update.getMessage() != null) msg = update.getMessage();
-                    if (update.getEditedMessage() != null) msg = update.getEditedMessage();
-
-                    TelegramMessage finalMsg = msg;
-                    config.getServers().forEach((serverName, messageThreadId) -> {
-                        if (finalMsg.getMessageThreadId().equals(messageThreadId)) {
-                            var optServer = proxyServer.getServer(serverName);
-
-                            if (optServer.isPresent()) {
-                                TelegramUser user = finalMsg.getFrom();
-                                String fmtString = config.getStrings().toMinecraftMessage.formatted(user.getFirstName(), user.getLastName(), finalMsg.getText());
-                                final TextComponent textComponent = Component.text(fmtString);
-                                optServer.get().sendMessage(textComponent);
-                            }
-                        }
-                    });
-//                    System.out.println(update.getMessage().getText());
+                    processUpdate(update);
                 }
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();

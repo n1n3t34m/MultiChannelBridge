@@ -36,7 +36,6 @@ public class TelegramSender {
         args.put("reply_to_message_id", String.valueOf(reply_to_message_id));
         var encoded = urlEncodeUTF8(args);
         var uri = api_url.formatted(token, "sendMessage", encoded);
-        System.out.println(uri);
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(uri))
                 .build();
@@ -50,7 +49,7 @@ public class TelegramSender {
         args.put("text", message);
         var encoded = urlEncodeUTF8(args);
         var uri = api_url.formatted(token, "sendMessage", encoded);
-        System.out.println(uri);
+        System.out.println(uri.replace(token, "<TOKEN>"));
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(uri))
                 .build();

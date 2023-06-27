@@ -13,7 +13,7 @@ public class Config {
     private String TelegramToken;
     private Long TelegramChatId;
 
-    private HashMap<String, Long> Servers = new HashMap<>(); // ServerName <-> Forum Thread ID
+    private final HashMap<String, Long> Servers = new HashMap<>(); // ServerName <-> Forum Thread ID
 
     public StringConfig getStrings() {
         return strings;
@@ -23,7 +23,7 @@ public class Config {
         this.strings = strings;
     }
 
-    private StringConfig strings;
+    private StringConfig strings = new StringConfig();
     public void generate(String pathName, ProxyServer proxy) {
         Gson gson = new Gson();
         this.setTelegramToken("");

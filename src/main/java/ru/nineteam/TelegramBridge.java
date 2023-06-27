@@ -4,7 +4,6 @@ package ru.nineteam;
 import com.google.gson.Gson;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
-
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
@@ -12,10 +11,15 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.ServerConnection;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
+import ru.nineteam.plugins.PlayerList;
+import ru.nineteam.plugins.ToMinecraft;
+
 import javax.inject.Inject;
-import java.io.*;
-
-
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -27,41 +31,68 @@ import java.util.Optional;
         authors = {"RasonGame"}
 )
 public class TelegramBridge {
-    private final ProxyServer server;
-    private TelegramSender sender;
-    private TelegramListener listener;
-    private long TelegramChatId;
-    private Config config;
-    private final Logger logger;
-    String regex = "(?s)`([^`]*)`|(\\*\\*|[_~])((?:(?!\\2).)*)\\2";
-    Path dataDirectory;
+    public ProxyServer getProxyServer() {
+        return server;
+    }
 
+    private final ProxyServer server;
+
+    public TelegramSender getSender() {
+        return sender;
+    }
+
+    private final TelegramSender sender;
+    private final long TelegramChatId;
+
+    public Config getConfig() {
+        return config;
+    }
+
+    private Config config;
+    Path dataDirectory;
+    static TelegramBridge instance;
+    public static TelegramBridge getInstance() {
+        return instance;
+    }
+
+    private void createOrLoadConfig() {
+        this.config = new Config();
+        Gson gson = new Gson();
+        var cfgPath = dataDirectory+"/config.json";
+        if (!Files.exists(dataDirectory)) {
+            try {
+                Files.createDirectory(dataDirectory);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if (!new File(cfgPath).exists()) {
+            config.generate(cfgPath, server);
+        } else {
+            try (Reader reader = new FileReader(cfgPath)) {
+                config = gson.fromJson(reader, Config.class);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
     @Inject
     public TelegramBridge(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
         this.dataDirectory = dataDirectory;
-        this.logger = logger;
         this.server = server;
-        String token = "";
-        long chat_id = 0L;
-        logger.info(String.valueOf(dataDirectory.toAbsolutePath()));
-        config = new Config();
-        Gson gson = new Gson();
-        if (!new File(dataDirectory+".json").exists()) {
-            config.generate(dataDirectory+ ".json", server);
-        } else {
-           try (Reader reader = new FileReader(dataDirectory+".json")) {
-               config = gson.fromJson(reader, Config.class);
 
-           } catch (IOException e) {
-               e.printStackTrace();
-           }
-        }
+        logger.info(String.valueOf(dataDirectory.toAbsolutePath()));
+        createOrLoadConfig();
 
         logger.info("StartUp Telegram bridge");
         this.sender = new TelegramSender(config.getTelegramToken());
         this.TelegramChatId = config.getTelegramChatId();
-        this.listener = new TelegramListener(config.getTelegramChatId(), config.getTelegramToken(), server, config);
-        new Thread(this.listener).start();
+        TelegramListener listener = new TelegramListener(config.getTelegramChatId(), config.getTelegramToken(), server, config, this);
+        instance = this;
+        listener.receivers.add(new PlayerList());
+        listener.receivers.add(new ToMinecraft());
+        new Thread(listener).start();
     }
     @Subscribe
     public void onPlayerChat(PlayerChatEvent event) {
