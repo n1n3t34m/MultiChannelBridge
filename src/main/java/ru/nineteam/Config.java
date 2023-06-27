@@ -9,9 +9,9 @@ import java.io.*;
 import java.util.HashMap;
 
 public class Config {
-    private Long TelegramTimeout;
-    private String TelegramToken;
-    private Long TelegramChatId;
+    private Long TelegramTimeout = 60L;
+    private String TelegramToken = "";
+    private Long TelegramChatId = 0L;
 
     private final HashMap<String, Long> Servers = new HashMap<>(); // ServerName <-> Forum Thread ID
 
@@ -26,8 +26,7 @@ public class Config {
     private StringConfig strings = new StringConfig();
     public void generate(String pathName, ProxyServer proxy) {
         Gson gson = new Gson();
-        this.setTelegramToken("");
-        this.setTelegramChatId(0L);
+
         for (RegisteredServer server: proxy.getAllServers()) {
             Servers.put(server.getServerInfo().getName(), 0L);
         }

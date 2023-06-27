@@ -42,8 +42,8 @@ public class TelegramBridge {
         return sender;
     }
 
-    private final TelegramSender sender;
-    private final long TelegramChatId;
+    private TelegramSender sender;
+    private long TelegramChatId;
 
     public Config getConfig() {
         return config;
@@ -55,6 +55,7 @@ public class TelegramBridge {
     public static TelegramBridge getInstance() {
         return instance;
     }
+    private Boolean running = false;
 
     private void createOrLoadConfig() {
         this.config = new Config();
@@ -85,7 +86,10 @@ public class TelegramBridge {
 
         logger.info(String.valueOf(dataDirectory.toAbsolutePath()));
         createOrLoadConfig();
-
+        if (config.getTelegramToken().equals("")) {
+            logger.warn("Telegram Token not set; Stopping");
+            return;
+        }
         logger.info("StartUp Telegram bridge");
         this.sender = new TelegramSender(config.getTelegramToken());
         this.TelegramChatId = config.getTelegramChatId();
@@ -95,10 +99,11 @@ public class TelegramBridge {
         listener.receivers.add(new ToMinecraft());
         listener.receivers.add(new ServerList());
         new Thread(listener).start();
+        this.running = true;
     }
     @Subscribe
     public void onPlayerChat(PlayerChatEvent event) {
-
+        if (!running) { return; }
         Optional<ServerConnection> fromServer = event.getPlayer().getCurrentServer();
         if (fromServer.isEmpty()) {
             return;
@@ -120,6 +125,8 @@ public class TelegramBridge {
     }
     @Subscribe
     public void onServerConnected(ServerConnectedEvent event) {
+        if (!running) { return; }
+
         var server = event.getServer();
         System.out.println(server);
         var playerName = event.getPlayer().getUsername();
