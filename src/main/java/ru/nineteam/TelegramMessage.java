@@ -2,7 +2,8 @@ package ru.nineteam;
 
 import com.google.gson.annotations.SerializedName;
 
-import com.google.gson.annotations.SerializedName;
+import java.util.Arrays;
+import java.util.List;
 
 public class TelegramMessage {
     @SerializedName("message_id")
@@ -152,6 +153,8 @@ public class TelegramMessage {
     public String getText() {
         return text;
     }
+    public String getCommand() { return text.split(" ")[0]; }
+    public List<String> getArgs() { return Arrays.asList(text.split(" "));}
 
     public void setText(String text) {
         this.text = text;

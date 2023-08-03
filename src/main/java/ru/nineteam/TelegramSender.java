@@ -11,7 +11,6 @@ import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -28,6 +27,23 @@ public class TelegramSender {
 
 
     }
+
+    public JSONObject getChatAdministrators(long chatId) throws ParseException, IOException, InterruptedException {
+        var args = new HashMap<String, String>();
+        args.put("chat_id", String.valueOf(chatId));
+        return method("getChatAdministrators", urlEncodeUTF8(args));
+
+
+    }
+    public JSONObject method(String method, String args) throws ParseException, IOException, InterruptedException{
+        var uri = api_url.formatted(token, method, args);
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(uri))
+                .build();
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+        return (JSONObject) parser.parse(resp.body());
+
+    }
     public JSONObject sendMessage(long chatId, String message, String parse_mode, Long reply_to_message_id) throws ParseException, IOException, InterruptedException {
         var args = new HashMap<String, String>();
         args.put("chat_id", String.valueOf(chatId));
@@ -35,12 +51,8 @@ public class TelegramSender {
         args.put("text", message);
         args.put("reply_to_message_id", String.valueOf(reply_to_message_id));
         var encoded = urlEncodeUTF8(args);
-        var uri = api_url.formatted(token, "sendMessage", encoded);
-        HttpRequest req = HttpRequest.newBuilder()
-                .uri(URI.create(uri))
-                .build();
-        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
-        return (JSONObject) parser.parse(resp.body());
+        return method("sendMessage", encoded);
+
     }
     public JSONObject sendMessage(long chatId, String message, String parse_mode) throws ParseException, IOException, InterruptedException {
         var args = new HashMap<String, String>();
@@ -48,14 +60,8 @@ public class TelegramSender {
         args.put("parse_mode", parse_mode);
         args.put("text", message);
         var encoded = urlEncodeUTF8(args);
-        var uri = api_url.formatted(token, "sendMessage", encoded);
-        System.out.println(uri.replace(token, "<TOKEN>"));
-        HttpRequest req = HttpRequest.newBuilder()
-                .uri(URI.create(uri))
-                .build();
-        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
-        System.out.println(resp.body());
-        return (JSONObject) parser.parse(resp.body());
+        return method("sendMessage", encoded);
+
     }
     static String urlEncodeUTF8(String s) {
         try {

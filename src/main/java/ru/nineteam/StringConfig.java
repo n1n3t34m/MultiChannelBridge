@@ -1,5 +1,6 @@
 package ru.nineteam;
 
+
 public class StringConfig {
     public String clientJoined = "[%s] %s joined.";
     public String clientJoinedVia = "[%s] %s joined via %s.";

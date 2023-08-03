@@ -5,13 +5,11 @@ import ru.nineteam.TelegramBridge;
 import ru.nineteam.TelegramMessage;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
 
 public class ServerList implements IMessageReceiver {
     public static boolean hostAvailabilityCheck(InetAddress serverAddress, int serverPort) {
