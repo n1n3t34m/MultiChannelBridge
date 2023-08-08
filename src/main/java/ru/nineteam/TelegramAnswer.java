@@ -3,11 +3,18 @@ package ru.nineteam;
 
 import com.google.gson.annotations.SerializedName;
 
-public class TelegramAnswer<T> {
+import java.util.List;
+
+public class TelegramAnswer {
     @SerializedName("ok")
     private Boolean ok = false;
     @SerializedName("result")
-    private T result = null;
+    private List<TelegramUpdate> result = null;
+
+    @SerializedName("error_code")
+    private String errorCode = "";
+    @SerializedName("description")
+    private String description = "";
 
     public Boolean getOk() {
         return ok;
@@ -17,11 +24,11 @@ public class TelegramAnswer<T> {
         this.ok = ok;
     }
 
-    public T getResult() {
+    public List<TelegramUpdate> getResult() {
         return result;
     }
 
-    public void setResult(T result) {
+    public void setResult(List<TelegramUpdate> result) {
         this.result = result;
     }
 }

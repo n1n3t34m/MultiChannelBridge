@@ -26,7 +26,7 @@ public class BansPlugin implements IMessageReceiver {
     boolean isAllowed(long userId) {
         return TelegramBridge.getInstance().getConfig().getOperatorList().contains(userId);
     }
-
+    
     void clearPunishments(UUID uuid, Long chatId, Long reply_to) {
         PunishmentRevoker revoker = libertyBans.getRevoker();
         RevocationOrder banOrder = revoker.revokeByTypeAndVictim(PunishmentType.BAN, PlayerVictim.of(uuid));
@@ -45,14 +45,16 @@ public class BansPlugin implements IMessageReceiver {
     }
     @Override
     public boolean onTelegramObjectMessage(@Nonnull TelegramMessage messageObject) {
+        String cmd = messageObject.getCommand();
+        if(!cmd.equals("/unpunish")){
+            return false;
+        }
         if(this.omnibus == null) {
             this.omnibus = OmnibusProvider.getOmnibus();
             this.libertyBans = omnibus.getRegistry().getProvider(LibertyBans.class).orElseThrow();
         }
-
-        String cmd = messageObject.getCommand();
         List<String> args = messageObject.getArgs();
-        if (args.size() >= 2 && isAllowed(messageObject.getFrom().getId()) && cmd.equals("/unpunish")) {
+        if (args.size() >= 2 && isAllowed(messageObject.getFrom().getId())) {
             UUID playerUUID = UUID.fromString(args.get(1));
             clearPunishments(playerUUID, messageObject.getChat().getId(), messageObject.getMessageThreadId());
         }

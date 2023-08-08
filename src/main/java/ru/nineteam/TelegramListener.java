@@ -87,10 +87,11 @@ public class TelegramListener implements Runnable {
                 HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
                 String text = resp.body();
 
-                TelegramAnswer<List<TelegramUpdate>> answer = parser.fromJson(text, new TypeToken<TelegramAnswer<List<TelegramUpdate>>>() {}.getType());
+                var answer = parser.fromJson(text, TelegramAnswer.class);
+
                 var updates = answer.getResult();
 
-                if (!updates.isEmpty()) {
+                if (updates != null && !updates.isEmpty()) {
                     for (var update : updates) {
                         if (update.getUpdateId() >= lastUpdateId) lastUpdateId = update.getUpdateId()+1;
                         processUpdate(update);
