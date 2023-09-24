@@ -41,9 +41,11 @@ public class TelegramSender {
                 .uri(URI.create(uri))
                 .build();
         HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+        System.out.println("%d %s ".formatted(resp.statusCode(), method));
         return (JSONObject) parser.parse(resp.body());
 
     }
+
     public JSONObject sendMessage(long chatId, String message, String parse_mode, Long reply_to_message_id) throws ParseException, IOException, InterruptedException {
         var args = new HashMap<String, String>();
         args.put("chat_id", String.valueOf(chatId));

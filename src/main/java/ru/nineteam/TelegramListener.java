@@ -68,11 +68,7 @@ public class TelegramListener implements Runnable {
     public void run() {
         Gson parser = new Gson();
         while(true) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
             var args = new HashMap<String, String>();
             args.put("offset", String.valueOf(lastUpdateId));
             args.put("timeout", String.valueOf(config.getTelegramTimeout()));
@@ -88,17 +84,15 @@ public class TelegramListener implements Runnable {
                 String text = resp.body();
 
                 var answer = parser.fromJson(text, TelegramAnswer.class);
-
                 var updates = answer.getResult();
-
                 if (updates != null && !updates.isEmpty()) {
                     for (var update : updates) {
                         if (update.getUpdateId() >= lastUpdateId) lastUpdateId = update.getUpdateId()+1;
                         processUpdate(update);
                     }
                 }
-            } catch (IOException | InterruptedException e) {
-
+            } catch (Exception e) {
+                System.out.println("ehhhh? connection reset ??");
                 e.printStackTrace();
             }
 
