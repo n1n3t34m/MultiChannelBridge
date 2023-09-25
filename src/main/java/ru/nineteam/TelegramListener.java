@@ -56,6 +56,7 @@ public class TelegramListener implements Runnable {
     }
     private void processUpdate(@Nullable TelegramUpdate update) {
         if (update == null) return;
+
         TelegramMessage msg = new TelegramMessage();
         if (update.getMessage() != null) msg = update.getMessage();
         if (update.getEditedMessage() != null) msg = update.getEditedMessage();
@@ -82,10 +83,15 @@ public class TelegramListener implements Runnable {
             try {
                 HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
                 String text = resp.body();
-
                 var answer = parser.fromJson(text, TelegramAnswer.class);
+                if (!answer.getOk()) {
+                    System.out.println(text);
+                    break;
+                }
                 var updates = answer.getResult();
+
                 if (updates != null && !updates.isEmpty()) {
+
                     for (var update : updates) {
                         if (update.getUpdateId() >= lastUpdateId) lastUpdateId = update.getUpdateId()+1;
                         processUpdate(update);

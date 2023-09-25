@@ -62,7 +62,7 @@ public class TelegramBridge {
         return instance;
     }
     private Boolean running = false;
-
+    private Boolean libertyBansFound = false;
     private void createOrLoadConfig() {
         this.config = new Config();
         Gson gson = new Gson();
@@ -84,6 +84,8 @@ public class TelegramBridge {
                 e.printStackTrace();
             }
         }
+        System.out.println(config.getTelegramTimeout());
+        System.out.println(config);
     }
     @Inject
     public TelegramBridge(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
@@ -104,24 +106,39 @@ public class TelegramBridge {
         listener.receivers.add(new PlayerList());
         listener.receivers.add(new ToMinecraft());
         listener.receivers.add(new ServerList());
-        listener.receivers.add(new BansPlugin());
+
+        try {
+            Class cls = Class.forName("space.arim.omnibus.Omnibus");
+            libertyBansFound = true;
+            // test if LibertyBans Installed
+
+        } catch (ClassNotFoundException e) {
+            libertyBansFound = false;
+        }
+        System.out.println("libertybans found: " + libertyBansFound);
+
+        if (libertyBansFound) listener.receivers.add(new BansPlugin());
         new Thread(listener).start();
 
         this.running = true;
 
     }
     @Subscribe
-    public void OnProxyInitialize(ProxyInitializeEvent event) {
+    public void onProxyInitialize(ProxyInitializeEvent event) {
+        System.out.println("telegram bridge proxy initialize");
         CommandManager cmdManager = getProxyServer().getCommandManager();
         CommandMeta cmdMeta = cmdManager.metaBuilder("tg_answer")
                 .plugin(this)
                 .build();
         RawCommand telegramAnswerCmd = new TelegramAnswer();
         cmdManager.register(cmdMeta, telegramAnswerCmd);
+        if (libertyBansFound) server.getEventManager().register(this,  new BansPlugin());
     }
     @Subscribe
     public void onPlayerChat(PlayerChatEvent event) {
         if (!running) { return; }
+        if (!event.getResult().isAllowed()) { return; }
+
         Optional<ServerConnection> fromServer = event.getPlayer().getCurrentServer();
         if (fromServer.isEmpty()) {
             return;
@@ -130,12 +147,15 @@ public class TelegramBridge {
         var text = event.getMessage();
         var playerName = event.getPlayer().getUsername();
         var serverName = server.getServerInfo().getName();
-        String message = config.getStrings().fromMinecraftMessage.formatted(serverName, playerName, text);
+        String message = config.getStrings().fromMinecraftMessage
+                .replace("{serverName}",serverName)
+                .replace("{playerName}",playerName)
+                .replace("{text}",text);
         try {
             String srvName = fromServer.get().getServerInfo().getName();
             var s = sender.sendMessage(TelegramChatId, message, "HTML", config.getServers().get(srvName));
             System.out.println(s);
-        } catch (IOException | InterruptedException | ParseException e) {
+        } catch (Exception e) {
             System.err.println(e.getMessage());
         }
 
@@ -149,12 +169,23 @@ public class TelegramBridge {
         var playerName = event.getPlayer().getUsername();
         var serverName = server.getServerInfo().getName();
         var message = "";
+        //
+        // если юзер зашел не из лобби - написать прямо
         if (event.getPreviousServer().isEmpty()) {
-            message = config.getStrings().clientJoined.formatted(serverName, playerName);
+            message = config.getStrings().clientJoined
+                    .replace("{serverName}", serverName)
+                    .replace("{playerName}", playerName);
         } else {
             var previousServerName = event.getPreviousServer().get().getServerInfo().getName();
-            message = config.getStrings().clientJoinedVia.formatted(serverName, playerName, previousServerName);
+            message = config.getStrings().clientJoinedVia
+                    .replace("{serverName}", serverName)
+                    .replace("{playerName}", playerName)
+                    .replace("{previousServerName}", previousServerName);
         }
+        //
+        //
+
+
         System.out.println(message);
         try {
             String srvName = server.getServerInfo().getName();
@@ -170,4 +201,5 @@ public class TelegramBridge {
             System.out.println(event.getResult());
         }
     }
+
 }

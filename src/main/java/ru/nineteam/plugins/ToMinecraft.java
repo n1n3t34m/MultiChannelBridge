@@ -20,11 +20,13 @@ public class ToMinecraft implements IMessageReceiver {
                 if (optServer.isPresent()) {
                     TelegramUser user = messageObject.getFrom();
                     String originalString = cfg.getStrings().toMinecraftMessage
+                            .replace("{first}", messageObject.getFrom().getFirstName())
+                            .replace("{last}", messageObject.getFrom().getLastName())
+                            .replace("{text}", messageObject.getText())
                             .replace("{thread_id}", String.valueOf(messageThreadId))
                             .replace("{message_to_reply}", String.valueOf(messageObject.getMessageId()));
-                    String fmtString = originalString.formatted(user.getFirstName(), user.getLastName(), messageObject.getText());
-                    System.out.println(fmtString);
-                    final Component textComponent = MiniMessage.miniMessage().deserialize(fmtString);
+                    System.out.println(originalString);
+                    final Component textComponent = MiniMessage.miniMessage().deserialize(originalString);
 
                     optServer.get().sendMessage(textComponent);
                 }

@@ -28,7 +28,11 @@ public class TelegramAnswer implements RawCommand {
         Player ply = (Player) invocation.source();
 
         String srvName = ply.getCurrentServer().isPresent() ? ply.getCurrentServer().get().getServerInfo().getName() : "";
-        String text = config.getStrings().fromMinecraftMessage.formatted(srvName, ply.getUsername(), playerText);
+        String text = config.getStrings().fromMinecraftMessage
+                .replace("{serverName}",srvName)
+                .replace("{playerName}",ply.getUsername())
+                .replace("{text}",playerText);
+
         if(ply.getCurrentServer().isPresent()) {
             final String fmtString = ("[Answer to <color:blue>T</color><color:red>G</color>] <%s>: %s").formatted(ply.getUsername(), playerText);
             final Component textComponent = MiniMessage.miniMessage().deserialize(fmtString);

@@ -2,6 +2,7 @@ package ru.nineteam;
 
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +30,8 @@ public class Config {
 
     private StringConfig strings = new StringConfig();
     public void generate(String pathName, ProxyServer proxy) {
-        Gson gson = new Gson();
-
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        strings.bansPluginMessages = new BansPluginStringConfig();
         for (RegisteredServer server: proxy.getAllServers()) {
             Servers.put(server.getServerInfo().getName(), 0L);
         }
