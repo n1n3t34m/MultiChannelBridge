@@ -23,7 +23,7 @@ public class TelegramAnswer implements RawCommand {
         if (args.size() < 3) {
             return;
         }
-        Long reply_to_message_id = Long.valueOf(args.get(1));
+        Long replyToMessageId = Long.valueOf(args.get(1));
         String playerText = String.join(" ", args.subList(2, args.size()));
         Player ply = (Player) invocation.source();
 
@@ -40,7 +40,7 @@ public class TelegramAnswer implements RawCommand {
             ply.getCurrentServer().get().getServer().sendMessage(textComponent);
         }
         try {
-            sender.sendMessage(config.getTelegramChatId(), text, "HTML", reply_to_message_id);
+            sender.sendMessage(config.getTelegramChatId(), text, "HTML", replyToMessageId);
         } catch (Exception e) {
             e.printStackTrace();
         }

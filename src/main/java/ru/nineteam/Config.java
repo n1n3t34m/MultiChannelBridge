@@ -15,6 +15,7 @@ public class Config {
     private Long TelegramTimeout = 60L;
     private String TelegramToken = "";
     private Long TelegramChatId = 0L;
+    private Long TelegramLogThread = 0L;
     @NotNull
     private ArrayList<Long> operatorList = new ArrayList<>();
     //    public ArrayList[Long] operatorList;
@@ -76,5 +77,13 @@ public class Config {
 
     public void setOperatorList(ArrayList<Long> operatorList) {
         this.operatorList = operatorList;
+    }
+
+    public Long getTelegramLogThread() {
+        return TelegramLogThread;
+    }
+
+    public void setTelegramLogThread(Long telegramLogThread) {
+        TelegramLogThread = telegramLogThread;
     }
 }

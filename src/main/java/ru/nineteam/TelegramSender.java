@@ -56,6 +56,7 @@ public class TelegramSender {
         return method("sendMessage", encoded);
 
     }
+
     public JSONObject sendMessage(long chatId, String message, String parse_mode) throws ParseException, IOException, InterruptedException {
         var args = new HashMap<String, String>();
         args.put("chat_id", String.valueOf(chatId));

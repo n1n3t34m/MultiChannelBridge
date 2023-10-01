@@ -27,7 +27,7 @@ public class ToMinecraft implements IMessageReceiver {
                             .replace("{message_to_reply}", String.valueOf(messageObject.getMessageId()));
                     System.out.println(originalString);
                     final Component textComponent = MiniMessage.miniMessage().deserialize(originalString);
-
+                    System.out.println(optServer.isPresent());
                     optServer.get().sendMessage(textComponent);
                 }
             }

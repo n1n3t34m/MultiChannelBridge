@@ -14,19 +14,18 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.ServerConnection;
+import com.velocitypowered.api.proxy.server.ServerInfo;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import ru.nineteam.commands.TelegramAnswer;
-import ru.nineteam.plugins.BansPlugin;
-import ru.nineteam.plugins.PlayerList;
-import ru.nineteam.plugins.ServerList;
-import ru.nineteam.plugins.ToMinecraft;
+import ru.nineteam.plugins.*;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -42,6 +41,7 @@ public class TelegramBridge {
     public ProxyServer getProxyServer() {
         return server;
     }
+
     private final ProxyServer server;
 
     public TelegramSender getSender() {
@@ -58,15 +58,22 @@ public class TelegramBridge {
     private Config config;
     Path dataDirectory;
     static TelegramBridge instance;
+
     public static TelegramBridge getInstance() {
         return instance;
     }
+
+    public Boolean getRunning() {
+        return running;
+    }
+
     private Boolean running = false;
     private Boolean libertyBansFound = false;
+
     private void createOrLoadConfig() {
         this.config = new Config();
         Gson gson = new Gson();
-        var cfgPath = dataDirectory+"/config.json";
+        var cfgPath = dataDirectory + "/config.json";
         if (!Files.exists(dataDirectory)) {
             try {
                 Files.createDirectory(dataDirectory);
@@ -87,6 +94,7 @@ public class TelegramBridge {
         System.out.println(config.getTelegramTimeout());
         System.out.println(config);
     }
+
     @Inject
     public TelegramBridge(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
         this.dataDirectory = dataDirectory;
@@ -106,7 +114,6 @@ public class TelegramBridge {
         listener.receivers.add(new PlayerList());
         listener.receivers.add(new ToMinecraft());
         listener.receivers.add(new ServerList());
-
         try {
             Class cls = Class.forName("space.arim.omnibus.Omnibus");
             libertyBansFound = true;
@@ -118,11 +125,13 @@ public class TelegramBridge {
         System.out.println("libertybans found: " + libertyBansFound);
 
         if (libertyBansFound) listener.receivers.add(new BansPlugin());
+
         new Thread(listener).start();
 
         this.running = true;
 
     }
+
     @Subscribe
     public void onProxyInitialize(ProxyInitializeEvent event) {
         System.out.println("telegram bridge proxy initialize");
@@ -132,74 +141,9 @@ public class TelegramBridge {
                 .build();
         RawCommand telegramAnswerCmd = new TelegramAnswer();
         cmdManager.register(cmdMeta, telegramAnswerCmd);
-        if (libertyBansFound) server.getEventManager().register(this,  new BansPlugin());
+        if (libertyBansFound) server.getEventManager().register(this, new BansPlugin());
+        server.getEventManager().register(this, new ToTelegram());
     }
-    @Subscribe
-    public void onPlayerChat(PlayerChatEvent event) {
-        if (!running) { return; }
-        if (!event.getResult().isAllowed()) { return; }
 
-        Optional<ServerConnection> fromServer = event.getPlayer().getCurrentServer();
-        if (fromServer.isEmpty()) {
-            return;
-        }
-        var server = fromServer.get();
-        var text = event.getMessage();
-        var playerName = event.getPlayer().getUsername();
-        var serverName = server.getServerInfo().getName();
-        String message = config.getStrings().fromMinecraftMessage
-                .replace("{serverName}",serverName)
-                .replace("{playerName}",playerName)
-                .replace("{text}",text);
-        try {
-            String srvName = fromServer.get().getServerInfo().getName();
-            var s = sender.sendMessage(TelegramChatId, message, "HTML", config.getServers().get(srvName));
-            System.out.println(s);
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-        }
-
-    }
-    @Subscribe
-    public void onServerConnected(ServerConnectedEvent event) {
-        if (!running) { return; }
-
-        var server = event.getServer();
-        System.out.println(server);
-        var playerName = event.getPlayer().getUsername();
-        var serverName = server.getServerInfo().getName();
-        var message = "";
-        //
-        // если юзер зашел не из лобби - написать прямо
-        if (event.getPreviousServer().isEmpty()) {
-            message = config.getStrings().clientJoined
-                    .replace("{serverName}", serverName)
-                    .replace("{playerName}", playerName);
-        } else {
-            var previousServerName = event.getPreviousServer().get().getServerInfo().getName();
-            message = config.getStrings().clientJoinedVia
-                    .replace("{serverName}", serverName)
-                    .replace("{playerName}", playerName)
-                    .replace("{previousServerName}", previousServerName);
-        }
-        //
-        //
-
-
-        System.out.println(message);
-        try {
-            String srvName = server.getServerInfo().getName();
-            var s = sender.sendMessage(TelegramChatId, message, "HTML", config.getServers().get(srvName));
-            System.out.println(s);
-        } catch (IOException | InterruptedException | ParseException e) {
-            System.err.println(e.getMessage());
-        }
-    }
-    @Subscribe
-    public void onCommandExecute(CommandExecuteEvent event) {
-        if (event.getCommand().equals("tg_answer")) {
-            System.out.println(event.getResult());
-        }
-    }
 
 }

@@ -30,12 +30,12 @@ public class BansPlugin implements IMessageReceiver {
 
     public BansPlugin() {
     }
-
     boolean isAllowed(long userId) {
         return TelegramBridge.getInstance().getConfig().getOperatorList().contains(userId);
     }
-    void reportBan(String opName, Victim victim, String reason, Duration duration) {
+    void reportBan(String opName, Victim victim, String reason, Duration duration, String serverName) {
         System.out.println(duration);
+
         try {
             String formattedDuration = libertyBans.getFormatter().formatDuration(duration);
             String draftString = "";
@@ -44,32 +44,34 @@ public class BansPlugin implements IMessageReceiver {
                     var _victim = (PlayerVictim) victim;
                     var victimName = libertyBans.getUserResolver().lookupName(_victim.getUUID()).get().get();
                     draftString = TelegramBridge.getInstance().getConfig().getStrings().bansPluginMessages.BannedByNickname
-                        .replace("{operatorName}", opName)
-                        .replace("{victimName}", victimName)
-                        .replace("{duration}", formattedDuration)
-                        .replace("{reason}", reason);
+                            .replace("{operatorName}", opName)
+                            .replace("{victimName}", victimName)
+                            .replace("{duration}", formattedDuration)
+                            .replace("{serverName}", serverName)
+                            .replace("{reason}", reason);
 
                 }
                 case ADDRESS -> {
                     var _victim = (AddressVictim) victim;
                     var victimIP = _victim.getAddress().toInetAddress();
                     draftString = TelegramBridge.getInstance().getConfig().getStrings().bansPluginMessages.BannedByIp
-                        .replace("{operatorName}", opName)
-                        .replace("{victimIP}", victimIP.toString())
-                        .replace("{duration}", formattedDuration)
-                        .replace("{reason}", reason);
+                            .replace("{operatorName}", opName)
+                            .replace("{victimIP}", victimIP.toString())
+                            .replace("{duration}", formattedDuration)
+                            .replace("{reason}", reason)
+                            .replace("{serverName}", serverName);
                 }
             }
             TelegramBridge.getInstance().getSender().sendMessage(
                     TelegramBridge.getInstance().getConfig().getTelegramChatId(),
                     draftString, "HTML",
-                    1L);
+                    TelegramBridge.getInstance().getConfig().getTelegramLogThread());
 
         } catch (ParseException | IOException | ExecutionException | InterruptedException e) {
            e.printStackTrace();
         }
     }
-    void reportKick(String opName, Victim victim, String reason) {
+    void reportKick(String opName, Victim victim, String reason, String serverName) {
         try {
             String draftString = ".";
             switch (victim.getType()) {
@@ -79,7 +81,8 @@ public class BansPlugin implements IMessageReceiver {
                     draftString = TelegramBridge.getInstance().getConfig().getStrings().bansPluginMessages.KickedByNickname
                             .replace("{operatorName}", opName)
                             .replace("{victimName}", victimName)
-                            .replace("{reason}", reason);
+                            .replace("{reason}", reason)
+                            .replace("{serverName}", serverName);
 
                 }
                 case ADDRESS -> {
@@ -88,14 +91,15 @@ public class BansPlugin implements IMessageReceiver {
                     draftString = TelegramBridge.getInstance().getConfig().getStrings().bansPluginMessages.KickedByIp
                             .replace("{operatorName}", opName)
                             .replace("{victimIP}", victimIP.toString())
-                            .replace("{reason}", reason);
+                            .replace("{reason}", reason)
+                            .replace("{serverName}", serverName);
                 }
             }
-            TelegramBridge.getInstance().getSender().sendMessage(
+            System.out.println(TelegramBridge.getInstance().getSender().sendMessage(
                     TelegramBridge.getInstance().getConfig().getTelegramChatId(),
                     draftString,
                     "HTML",
-                    1L);
+                    TelegramBridge.getInstance().getConfig().getTelegramLogThread()));
 
         } catch (ExecutionException | InterruptedException | ParseException | IOException e) {
             e.printStackTrace();
@@ -103,11 +107,9 @@ public class BansPlugin implements IMessageReceiver {
     }
     void report(PunishEvent punishEvent) {
         var draft = punishEvent.getDraftPunishment();
-        System.out.println(draft.getDuration());
-        System.out.println(draft.getOperator());
-        System.out.println(draft.getType());
-        System.out.println(draft.getVictim());
+
         var operatorName = "Консоль";
+        var serverName = "staff";
 
         if (!draft.getOperator().getType().equals(Operator.OperatorType.CONSOLE)) {
             var op = (PlayerOperator) draft.getOperator();
@@ -119,19 +121,21 @@ public class BansPlugin implements IMessageReceiver {
             }
         }
         try {
+            System.out.println(TelegramBridge.getInstance().getConfig().getTelegramLogThread());
             switch (draft.getType()) {
-                case BAN -> reportBan(operatorName, draft.getVictim(), draft.getReason(), draft.getDuration());
-                case KICK -> reportKick(operatorName, draft.getVictim(), draft.getReason());
+                case BAN -> reportBan(operatorName, draft.getVictim(), draft.getReason(), draft.getDuration(), serverName);
+                case KICK -> reportKick(operatorName, draft.getVictim(), draft.getReason(), serverName);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
     void init() {
+        System.out.println("init()");
         omnibus = OmnibusProvider.getOmnibus();
         libertyBans = omnibus.getRegistry().getProvider(LibertyBans.class).orElseThrow();
         EventConsumer<PunishEvent> listener = this::report;
-        omnibus.getEventBus().registerListener(PunishEvent.class, ListenerPriorities.NORMAL, listener);
+        omnibus.getEventBus().registerListener(PunishEvent.class, ListenerPriorities.HIGHEST, listener);
     }
     void clearPunishments(UUID uuid, Long chatId, Long reply_to) {
         PunishmentRevoker revoker = libertyBans.getRevoker();
@@ -165,12 +169,45 @@ public class BansPlugin implements IMessageReceiver {
 
         if(omnibus==null)init();
         List<String> args = messageObject.getArgs();
+
+
         switch (cmd) {
+            case "/ban" -> {
+                if (args.size() < 2) {
+                    try {
+                        TelegramBridge.getInstance().getSender().sendMessage(
+                                TelegramBridge.getInstance().getConfig().getTelegramChatId(),
+                                "/ban $nickname $1m1d12h $reason", "HTML",
+                                messageObject.getMessageThreadId());
+                    } catch (ParseException | IOException | InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                String duration = "1d";
+                String reason = "";
+
+                String playerNickname = args.get(1);
+
+                if (args.size() >= 3) duration = args.get(2);
+                if (args.size() >= 4) reason = String.join(" ", args.subList(3, args.size()));
+                try {
+                    var resolvedNickname = libertyBans.getUserResolver().lookupUUID(playerNickname).get();
+                    if(resolvedNickname.isPresent()) {
+                        DraftPunishment banOrder = libertyBans.getDrafter().draftBuilder()
+                                .type(PunishmentType.BAN)
+                                .victim(PlayerVictim.of(resolvedNickname.get()))
+                                .reason(reason)
+                                .duration(Duration.parse("P"+duration))
+                                .build();
+                        banOrder.enactPunishment();
+                    }
+                } catch (ExecutionException | InterruptedException e) {e.printStackTrace(); }
+            }
             case "/kick" -> {
                 if (args.size() >=2 && isAllowed(messageObject.getFrom().getId())) {
                     String reason = "";
                     String playerNickname = args.get(1);
-                    if (args.size() >= 3) reason = args.get(2);
+                    if (args.size() >= 3) reason = String.join(" ", args.subList(2, args.size()));
                     try {
                         var resolvedNickname = libertyBans.getUserResolver().lookupUUID(playerNickname).get();
                         if (resolvedNickname.isPresent()) {
