@@ -18,6 +18,7 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import ru.nineteam.commands.TelegramAnswer;
+import ru.nineteam.commands.TelegramBridgePing;
 import ru.nineteam.plugins.*;
 
 import javax.inject.Inject;
@@ -69,7 +70,10 @@ public class TelegramBridge {
 
     private Boolean running = false;
     private Boolean libertyBansFound = false;
-
+    private Logger logger;
+    public Logger getLogger() {
+        return logger;
+    }
     private void createOrLoadConfig() {
         this.config = new Config();
         Gson gson = new Gson();
@@ -99,7 +103,7 @@ public class TelegramBridge {
     public TelegramBridge(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
         this.dataDirectory = dataDirectory;
         this.server = server;
-
+        this.logger = logger;
         logger.info(String.valueOf(dataDirectory.toAbsolutePath()));
         createOrLoadConfig();
         if (config.getTelegramToken().equals("")) {
@@ -124,7 +128,7 @@ public class TelegramBridge {
         }
         System.out.println("libertybans found: " + libertyBansFound);
 
-        if (libertyBansFound) listener.receivers.add(new BansPlugin());
+        if (libertyBansFound) listener.receivers.add(new BansPlugin(logger));
 
         new Thread(listener).start();
 
@@ -136,12 +140,18 @@ public class TelegramBridge {
     public void onProxyInitialize(ProxyInitializeEvent event) {
         System.out.println("telegram bridge proxy initialize");
         CommandManager cmdManager = getProxyServer().getCommandManager();
-        CommandMeta cmdMeta = cmdManager.metaBuilder("tg_answer")
+        CommandMeta answerCmdMeta = cmdManager.metaBuilder("tg_answer")
                 .plugin(this)
                 .build();
+        CommandMeta pingCmdMeta = cmdManager.metaBuilder("tg_ping")
+                .plugin(this)
+                .build();
+
         RawCommand telegramAnswerCmd = new TelegramAnswer();
-        cmdManager.register(cmdMeta, telegramAnswerCmd);
-        if (libertyBansFound) server.getEventManager().register(this, new BansPlugin());
+        RawCommand telegramPingCmd = new TelegramBridgePing();
+        cmdManager.register(answerCmdMeta, telegramAnswerCmd);
+        cmdManager.register(pingCmdMeta, telegramPingCmd);
+        if (libertyBansFound) server.getEventManager().register(this, new BansPlugin(logger));
         server.getEventManager().register(this, new ToTelegram());
     }
 

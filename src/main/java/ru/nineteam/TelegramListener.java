@@ -3,6 +3,7 @@ package ru.nineteam;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.velocitypowered.api.proxy.ProxyServer;
+import org.slf4j.Logger;
 
 
 import javax.annotation.Nullable;
@@ -20,6 +21,7 @@ import java.util.Map;
 
 public class TelegramListener implements Runnable {
     TelegramBridge bridge;
+    Logger logger;
     long chatId;
     long lastUpdateId = -1;
     String token;
@@ -37,6 +39,7 @@ public class TelegramListener implements Runnable {
         this.chatId = chat_id;
         this.proxyServer = proxyServer;
         this.bridge = bridge;
+        this.logger = bridge.getLogger();
     }
     static String urlEncodeUTF8(String s) {
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
@@ -85,8 +88,8 @@ public class TelegramListener implements Runnable {
                 String text = resp.body();
                 var answer = parser.fromJson(text, TelegramAnswer.class);
                 if (!answer.getOk()) {
-                    System.out.println(text);
-                    break;
+                    logger.error(text);
+                    continue;
                 }
                 var updates = answer.getResult();
 
@@ -98,7 +101,7 @@ public class TelegramListener implements Runnable {
                     }
                 }
             } catch (Exception e) {
-                System.out.println("ehhhh? connection reset ??");
+                logger.warn("ehhhh? connection reset ??");
                 e.printStackTrace();
             }
 

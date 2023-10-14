@@ -16,8 +16,8 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 public class TelegramSender {
-    private String token = null;
-    private HttpClient client = null;
+    private String token;
+    private HttpClient client;
     private JSONParser parser;
     final private String api_url = "https://api.telegram.org/bot%s/%s?%s";
     public TelegramSender(String telegramToken) {

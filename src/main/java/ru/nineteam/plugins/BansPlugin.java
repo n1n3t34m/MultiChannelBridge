@@ -3,6 +3,7 @@ package ru.nineteam.plugins;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ListenerBoundEvent;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
 import ru.nineteam.*;
 
 import javax.annotation.Nonnull;
@@ -27,8 +28,9 @@ import java.util.concurrent.ExecutionException;
 public class BansPlugin implements IMessageReceiver {
     private static Omnibus omnibus;
     private static LibertyBans libertyBans;
-
-    public BansPlugin() {
+    private Logger logger;
+    public BansPlugin(Logger logger) {
+        this.logger = logger;
     }
     boolean isAllowed(long userId) {
         return TelegramBridge.getInstance().getConfig().getOperatorList().contains(userId);
