@@ -135,9 +135,16 @@ public class BansPlugin implements IMessageReceiver {
     void init() {
         System.out.println("init()");
         omnibus = OmnibusProvider.getOmnibus();
-        libertyBans = omnibus.getRegistry().getProvider(LibertyBans.class).orElseThrow();
-        EventConsumer<PunishEvent> listener = this::report;
-        omnibus.getEventBus().registerListener(PunishEvent.class, ListenerPriorities.HIGHEST, listener);
+        var libertyBansProvider = omnibus.getRegistry().getProvider(LibertyBans.class);
+        if (libertyBansProvider.isPresent()) {
+            libertyBans = libertyBansProvider.get();
+            EventConsumer<PunishEvent> listener = this::report;
+            omnibus.getEventBus().registerListener(PunishEvent.class, ListenerPriorities.HIGHEST, listener);
+            logger.error("libertybans provider is alive");
+        } else {
+            logger.error("libertybans provider is dead");
+        }
+
     }
     void clearPunishments(UUID uuid, Long chatId, Long reply_to) {
         PunishmentRevoker revoker = libertyBans.getRevoker();
@@ -158,9 +165,9 @@ public class BansPlugin implements IMessageReceiver {
 
     @Subscribe()
     public void onSomething(ListenerBoundEvent e) {
-        System.out.println("proxy initialize bansplugin");
-        if (omnibus == null) {
-            System.out.println("initialize");
+        logger.info("initialize bansplugin");
+        if (omnibus == null || libertyBans == null) {
+            logger.info("omnibus||libertyballs == null ; init();");
             init();
         }
     }
@@ -169,7 +176,7 @@ public class BansPlugin implements IMessageReceiver {
     public boolean onTelegramObjectMessage(@Nonnull TelegramMessage messageObject) {
         String cmd = messageObject.getCommand();
 
-        if(omnibus==null)init();
+        if(omnibus==null||libertyBans==null)init();
         List<String> args = messageObject.getArgs();
 
 

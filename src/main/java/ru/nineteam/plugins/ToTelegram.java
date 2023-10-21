@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 public class ToTelegram {
-    private boolean _serverStarted = false;
+    private static boolean _serverStarted = false;
     private final int maxTries = 3;
     @Subscribe
     public void onPlayerDisconnect(DisconnectEvent event) {

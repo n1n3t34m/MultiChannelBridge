@@ -31,6 +31,7 @@ public class ServerList implements IMessageReceiver {
         for (var server:servers) {
             var info = server.getServerInfo();
             var address = info.getAddress();
+            
             boolean alive = hostAvailabilityCheck(address.getAddress(), address.getPort());
             lines.add("<b>%s</b>: %d игроков, %s".formatted(info.getName(),server.getPlayersConnected().size(), !alive ? "⚰\uFE0F" : "\uD83D\uDC4B"));
 
