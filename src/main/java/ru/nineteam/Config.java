@@ -31,7 +31,7 @@ public class Config {
 
     private StringConfig strings = new StringConfig();
     public void generate(String pathName, ProxyServer proxy) {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
         strings.bansPluginMessages = new BansPluginStringConfig();
         for (RegisteredServer server: proxy.getAllServers()) {
             Servers.put(server.getServerInfo().getName(), 0L);

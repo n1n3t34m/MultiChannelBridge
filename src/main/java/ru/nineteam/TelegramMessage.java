@@ -117,7 +117,6 @@ public class TelegramMessage {
     public void setForwardDate(Long forwardDate) {
         this.forwardDate = forwardDate;
     }
-
     public TelegramMessage getReplyToMessage() {
         return replyToMessage;
     }
@@ -141,7 +140,7 @@ public class TelegramMessage {
     public void setMediaGroupId(String mediaGroupId) {
         this.mediaGroupId = mediaGroupId;
     }
-
+    @SerializedName("author_signature")
     public String getAuthorSignature() {
         return authorSignature;
     }

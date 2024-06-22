@@ -15,21 +15,30 @@ public class ToMinecraft implements IMessageReceiver {
         var bridge = TelegramBridge.getInstance();
         var cfg = bridge.getConfig();
         cfg.getServers().forEach((serverName, messageThreadId) -> {
-            if (messageObject.getMessageThreadId().equals(messageThreadId)) {
-                var optServer = bridge.getProxyServer().getServer(serverName);
-                if (optServer.isPresent()) {
-                    TelegramUser user = messageObject.getFrom();
-                    String originalString = cfg.getStrings().toMinecraftMessage
-                            .replace("{first}", messageObject.getFrom().getFirstName())
-                            .replace("{last}", messageObject.getFrom().getLastName())
-                            .replace("{text}", messageObject.getText())
-                            .replace("{thread_id}", String.valueOf(messageThreadId))
-                            .replace("{message_to_reply}", String.valueOf(messageObject.getMessageId()));
-                    System.out.println(originalString);
-                    final Component textComponent = MiniMessage.miniMessage().deserialize(originalString);
-                    System.out.println(optServer.isPresent());
-                    optServer.get().sendMessage(textComponent);
+            boolean is_reply_message = messageObject.getReplyToMessage() != null && messageObject.getReplyToMessage().getMessageThreadId().equals(messageThreadId);
+            boolean is_single_message = messageObject.getMessageThreadId().equals(messageThreadId);
+            if (!is_single_message && !is_reply_message) { return; }
+
+            var optServer = bridge.getProxyServer().getServer(serverName);
+
+            if (optServer.isPresent()) {
+                TelegramUser user = messageObject.getFrom();
+                String originalString = cfg.getStrings().toMinecraftMessage
+                        .replace("{first}", messageObject.getFrom().getFirstName())
+                        .replace("{last}", messageObject.getFrom().getLastName())
+                        .replace("{text}", messageObject.getText())
+                        .replace("{thread_id}", String.valueOf(messageThreadId))
+                        .replace("{message_to_reply}", String.valueOf(messageObject.getMessageId()));
+                if (is_reply_message) {
+                    TelegramMessage reply = messageObject.getReplyToMessage();
+                    String replyString = cfg.getStrings().toMinecraftReplyMessage
+                            .replace("{first}", reply.getFrom().getFirstName())
+                            .replace("{last}", reply.getFrom().getLastName())
+                            .replace("{text}", reply.getText());
+                    originalString = String.format("%s\n%s", replyString,originalString);
                 }
+                final Component textComponent = MiniMessage.miniMessage().deserialize(originalString);
+                optServer.get().sendMessage(textComponent);
             }
         });
         return true;
