@@ -41,7 +41,7 @@ public class TelegramSender {
                 .uri(URI.create(uri))
                 .build();
         HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
-        System.out.println("%d %s ".formatted(resp.statusCode(), method));
+        TelegramBridge.getInstance().getLogger().info("%d %s ".formatted(resp.statusCode(), method));
         return (JSONObject) parser.parse(resp.body());
 
     }

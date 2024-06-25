@@ -6,16 +6,10 @@ import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.RawCommand;
 import com.velocitypowered.api.event.Subscribe;
-import com.velocitypowered.api.event.player.PlayerChatEvent;
-import com.velocitypowered.api.event.player.ServerConnectedEvent;
-import com.velocitypowered.api.event.command.CommandExecuteEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.ServerConnection;
-import com.velocitypowered.api.proxy.server.ServerInfo;
-import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import ru.nineteam.commands.TelegramAnswer;
 import ru.nineteam.commands.TelegramBridgePing;
@@ -26,15 +20,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 
 @Plugin(id="telegrambridge",
         name = "TelegramBridge",
-        version = "0.1.0-SNAPSHOT",
-        url = "nineteam.ru",
+        version = "0.1.2-SNAPSHOT",
+        url = "nineteam.org",
         description = "test",
         authors = {"RasonGame"}
 )
@@ -74,29 +66,37 @@ public class TelegramBridge {
     public Logger getLogger() {
         return logger;
     }
-    private void createOrLoadConfig() {
+    public void createOrLoadConfig() {
+        boolean is_reload = false;
+        if (this.config != null) {
+            is_reload = true;
+            logger.info("Config reload?");
+        }
         this.config = new Config();
-        Gson gson = new Gson();
         var cfgPath = dataDirectory + "/config.json";
         if (!Files.exists(dataDirectory)) {
             try {
+                logger.info("config directory not exists. creating");
                 Files.createDirectory(dataDirectory);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
         if (!new File(cfgPath).exists()) {
+            logger.info("config not exists. generating");
             config.generate(cfgPath, server);
         } else {
             try (Reader reader = new FileReader(cfgPath)) {
-                config = gson.fromJson(reader, Config.class);
+                logger.info("config exists. attempt to read");
+                config = new Gson().fromJson(reader, Config.class);
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        System.out.println(config.getTelegramTimeout());
-        System.out.println(config);
+        if (is_reload) {
+            logger.info(config.toString());
+        }
     }
 
     @Inject
@@ -118,6 +118,7 @@ public class TelegramBridge {
         listener.receivers.add(new PlayerList());
         listener.receivers.add(new ToMinecraft());
         listener.receivers.add(new ServerList());
+        listener.receivers.add(new BridgeControl());
         try {
             Class cls = Class.forName("space.arim.omnibus.Omnibus");
             libertyBansFound = true;
@@ -126,7 +127,7 @@ public class TelegramBridge {
         } catch (ClassNotFoundException e) {
             libertyBansFound = false;
         }
-        System.out.println("libertybans found: " + libertyBansFound);
+        logger.info("libertybans found: " + libertyBansFound);
 
         if (libertyBansFound) listener.receivers.add(new BansPlugin(logger));
 
@@ -138,7 +139,7 @@ public class TelegramBridge {
 
     @Subscribe
     public void onProxyInitialize(ProxyInitializeEvent event) {
-        System.out.println("telegram bridge proxy initialize");
+        logger.info("telegram bridge proxy initialize");
         CommandManager cmdManager = getProxyServer().getCommandManager();
         CommandMeta answerCmdMeta = cmdManager.metaBuilder("tg_answer")
                 .plugin(this)

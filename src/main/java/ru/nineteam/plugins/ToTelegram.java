@@ -55,7 +55,6 @@ public class ToTelegram {
         }
 
         var server = event.getServer();
-        System.out.println(server);
         var playerName = event.getPlayer().getUsername();
         var serverName = server.getServerInfo().getName();
         var message = "";
@@ -76,7 +75,7 @@ public class ToTelegram {
         //
 
 
-        System.out.println(message);
+        TelegramBridge.getInstance().getLogger().info(message);
         int count = 0;
         while (true) {
             try {
@@ -84,7 +83,6 @@ public class ToTelegram {
                 var telegramChatId = config.getTelegramChatId();
                 String srvName = server.getServerInfo().getName();
                 var s = sender.sendMessage(telegramChatId, message, "HTML", config.getServers().get(srvName));
-                System.out.println(s);
                 break;
             } catch (IOException | InterruptedException | ParseException e) {
                 if (++count == maxTries)  e.printStackTrace();
@@ -95,14 +93,17 @@ public class ToTelegram {
     @Subscribe
     public void onProxyReload(ProxyReloadEvent ev) {
         var cfg = TelegramBridge.getInstance().getConfig();
+        TelegramBridge.getInstance().getLogger().info("telegram bridge loaded. reloading config.");
         try {
+            TelegramBridge.getInstance().createOrLoadConfig();
+
             TelegramBridge.getInstance().getSender().sendMessage(
                     cfg.getTelegramChatId(),
                     cfg.getStrings().masterServerReloaded,
                     "html",
                     cfg.getTelegramLogThread()
             );
-        } catch (ParseException | IOException | InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -136,12 +137,6 @@ public class ToTelegram {
         }
         _serverStarted = true;
     }
-    @Subscribe
-    public void onCommandExecute(CommandExecuteEvent event) {
-        if (event.getCommand().equals("tg_answer")) {
-            System.out.println(event.getResult());
-        }
-    }
 
     @Subscribe(order = PostOrder.LAST)
     public void onPlayerChat(PlayerChatEvent event) {
@@ -169,7 +164,6 @@ public class ToTelegram {
                 var sender = TelegramBridge.getInstance().getSender();
                 var telegramChatId = config.getTelegramChatId();
                 var s = sender.sendMessage(telegramChatId, message, "HTML", config.getServers().get(srvName));
-                System.out.println(s);
                 break;
             } catch (Exception e) {
                 if (++count == maxTries) e.printStackTrace();

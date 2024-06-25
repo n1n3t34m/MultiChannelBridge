@@ -1,6 +1,5 @@
 package ru.nineteam;
 
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -30,13 +29,14 @@ public class Config {
     }
 
     private StringConfig strings = new StringConfig();
+
     public void generate(String pathName, ProxyServer proxy) {
         Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
         strings.bansPluginMessages = new BansPluginStringConfig();
-        for (RegisteredServer server: proxy.getAllServers()) {
+        for (RegisteredServer server : proxy.getAllServers()) {
             Servers.put(server.getServerInfo().getName(), 0L);
         }
-        try(FileWriter writer = new FileWriter(pathName)) {
+        try (FileWriter writer = new FileWriter(pathName)) {
             gson.toJson(this, writer);
         } catch (IOException e) {
             e.printStackTrace();
@@ -85,5 +85,18 @@ public class Config {
 
     public void setTelegramLogThread(Long telegramLogThread) {
         TelegramLogThread = telegramLogThread;
+    }
+
+    @Override
+    public String toString() {
+        return "Config{" +
+                "TelegramTimeout=" + TelegramTimeout +
+                ", TelegramToken='" + TelegramToken + '\'' +
+                ", TelegramChatId=" + TelegramChatId +
+                ", TelegramLogThread=" + TelegramLogThread +
+                ", operatorList=" + operatorList +
+                ", Servers=" + Servers +
+                ", strings=" + strings +
+                '}';
     }
 }

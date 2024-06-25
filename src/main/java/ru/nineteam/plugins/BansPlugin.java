@@ -36,7 +36,7 @@ public class BansPlugin implements IMessageReceiver {
         return TelegramBridge.getInstance().getConfig().getOperatorList().contains(userId);
     }
     void reportBan(String opName, Victim victim, String reason, Duration duration, String serverName) {
-        System.out.println(duration);
+        TelegramBridge.getInstance().getLogger().info(String.valueOf(duration));
 
         try {
             String formattedDuration = libertyBans.getFormatter().formatDuration(duration);
@@ -97,11 +97,11 @@ public class BansPlugin implements IMessageReceiver {
                             .replace("{serverName}", serverName);
                 }
             }
-            System.out.println(TelegramBridge.getInstance().getSender().sendMessage(
+            TelegramBridge.getInstance().getSender().sendMessage(
                     TelegramBridge.getInstance().getConfig().getTelegramChatId(),
                     draftString,
                     "HTML",
-                    TelegramBridge.getInstance().getConfig().getTelegramLogThread()));
+                    TelegramBridge.getInstance().getConfig().getTelegramLogThread());
 
         } catch (ExecutionException | InterruptedException | ParseException | IOException e) {
             e.printStackTrace();
@@ -123,7 +123,7 @@ public class BansPlugin implements IMessageReceiver {
             }
         }
         try {
-            System.out.println(TelegramBridge.getInstance().getConfig().getTelegramLogThread());
+            TelegramBridge.getInstance().getConfig().getTelegramLogThread();
             switch (draft.getType()) {
                 case BAN -> reportBan(operatorName, draft.getVictim(), draft.getReason(), draft.getDuration(), serverName);
                 case KICK -> reportKick(operatorName, draft.getVictim(), draft.getReason(), serverName);
@@ -133,7 +133,7 @@ public class BansPlugin implements IMessageReceiver {
         }
     }
     void init() {
-        System.out.println("init()");
+        TelegramBridge.getInstance().getLogger().info("init()");
         omnibus = OmnibusProvider.getOmnibus();
         var libertyBansProvider = omnibus.getRegistry().getProvider(LibertyBans.class);
         if (libertyBansProvider.isPresent()) {

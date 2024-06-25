@@ -14,5 +14,19 @@ public class StringConfig {
     public String masterServerStopped = "[Master server has stopped.]";
     public String masterServerReloaded = "[Master server has reload.]";
 
-
+    @Override
+    public String toString() {
+        return "StringConfig{" +
+                "clientJoined='" + clientJoined + '\'' +
+                ", clientJoinedVia='" + clientJoinedVia + '\'' +
+                ", fromMinecraftMessage='" + fromMinecraftMessage + '\'' +
+                ", bansPluginMessages=" + bansPluginMessages +
+                ", toMinecraftMessage='" + toMinecraftMessage + '\'' +
+                ", toMinecraftReplyMessage='" + toMinecraftReplyMessage + '\'' +
+                ", clientDisconnect='" + clientDisconnect + '\'' +
+                ", masterServerStarted='" + masterServerStarted + '\'' +
+                ", masterServerStopped='" + masterServerStopped + '\'' +
+                ", masterServerReloaded='" + masterServerReloaded + '\'' +
+                '}';
+    }
 }
