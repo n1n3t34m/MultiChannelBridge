@@ -25,6 +25,7 @@ public class ToTelegram {
         if (event.getLoginStatus() != DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN) {
             return;
         }
+
         var server = event.getPlayer().getCurrentServer();
         var serverName = (server.isPresent()) ? server.get().getServerInfo().getName() : "lobby";
         var message = config.getStrings().clientDisconnect
@@ -32,12 +33,16 @@ public class ToTelegram {
                 .replace("{playerName}", event.getPlayer().getUsername());
         var sender = TelegramBridge.getInstance().getSender();
         int count = 0;
+        var threadId = !config.isLogPlayerConnectionsToLogThread()
+                ? config.getServers().get(serverName)
+                : config.getTelegramLogThread();
+
         while(true) {
             try {
                 sender.sendMessage(
                         config.getTelegramChatId(),
                         message, "html",
-                        config.getServers().get(serverName));
+                        threadId);
                 break;
             } catch (ParseException | IOException | InterruptedException e) {
                 if (++count == maxTries) e.printStackTrace();
@@ -77,12 +82,15 @@ public class ToTelegram {
 
         TelegramBridge.getInstance().getLogger().info(message);
         int count = 0;
+        var threadId = !config.isLogPlayerConnectionsToLogThread()
+                ? config.getServers().get(serverName)
+                : config.getTelegramLogThread();
+
         while (true) {
             try {
                 var sender = TelegramBridge.getInstance().getSender();
                 var telegramChatId = config.getTelegramChatId();
-                String srvName = server.getServerInfo().getName();
-                var s = sender.sendMessage(telegramChatId, message, "HTML", config.getServers().get(srvName));
+                var s = sender.sendMessage(telegramChatId, message, "HTML", threadId);
                 break;
             } catch (IOException | InterruptedException | ParseException e) {
                 if (++count == maxTries)  e.printStackTrace();
@@ -158,12 +166,16 @@ public class ToTelegram {
                 .replace("{playerName}", playerName)
                 .replace("{text}", text);
         int count = 0;
+        var threadId = !config.isLogPlayerConnectionsToLogThread()
+        ? config.getServers().get(serverName)
+        : config.getTelegramLogThread();
+
         while (true) {
             try {
                 String srvName = fromServer.get().getServerInfo().getName();
                 var sender = TelegramBridge.getInstance().getSender();
                 var telegramChatId = config.getTelegramChatId();
-                var s = sender.sendMessage(telegramChatId, message, "HTML", config.getServers().get(srvName));
+                var s = sender.sendMessage(telegramChatId, message, "HTML", threadId);
                 break;
             } catch (Exception e) {
                 if (++count == maxTries) e.printStackTrace();

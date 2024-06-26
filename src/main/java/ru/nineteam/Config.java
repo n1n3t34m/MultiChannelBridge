@@ -17,7 +17,10 @@ public class Config {
     private Long TelegramLogThread = 0L;
     @NotNull
     private ArrayList<Long> operatorList = new ArrayList<>();
-    //    public ArrayList[Long] operatorList;
+
+
+
+    private boolean logPlayerConnectionsToLogThread = false; // если false - логироваться подключения отключения в канал сервера
     private final HashMap<String, Long> Servers = new HashMap<>(); // ServerName <-> Forum Thread ID
 
     public StringConfig getStrings() {
@@ -98,5 +101,12 @@ public class Config {
                 ", Servers=" + Servers +
                 ", strings=" + strings +
                 '}';
+    }
+   public boolean isLogPlayerConnectionsToLogThread() {
+        return logPlayerConnectionsToLogThread;
+    }
+
+    public void setLogPlayerConnectionsToLogThread(boolean logPlayerConnectionsToLogThread) {
+        this.logPlayerConnectionsToLogThread = logPlayerConnectionsToLogThread;
     }
 }
