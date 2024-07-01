@@ -2,14 +2,26 @@ package ru.nineteam.plugins;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import ru.nineteam.IMessageReceiver;
-import ru.nineteam.TelegramBridge;
-import ru.nineteam.TelegramMessage;
-import ru.nineteam.TelegramUser;
+import ru.nineteam.*;
 
 import javax.annotation.Nonnull;
 
 public class ToMinecraft implements IMessageReceiver {
+    private String formatToMinecraftMessage(Config cfg, TelegramMessage messageObject, Long messageThreadId) {
+        return cfg.getStrings().toMinecraftMessage
+                    .replace("{first}", messageObject.getFrom().getFirstName())
+                    .replace("{last}", messageObject.getFrom().getLastName())
+                    .replace("{text}", messageObject.getText())
+                    .replace("{thread_id}", String.valueOf(messageThreadId))
+                    .replace("{message_to_reply}", String.valueOf(messageObject.getMessageId()));
+    }
+    private String formatToMinecraftReplyMessage(Config cfg, TelegramMessage messageObject) {
+        TelegramMessage reply = messageObject.getReplyToMessage();
+        return cfg.getStrings().toMinecraftReplyMessage
+                .replace("{first}", reply.getFrom().getFirstName())
+                .replace("{last}", reply.getFrom().getLastName())
+                .replace("{text}", reply.getText());
+    }
     @Override
     public boolean onTelegramObjectMessage(@Nonnull TelegramMessage messageObject) {
         var bridge = TelegramBridge.getInstance();
@@ -23,21 +35,10 @@ public class ToMinecraft implements IMessageReceiver {
             if (!is_single_message && !is_reply_message) { return; }
             if (optServer.isEmpty()) { return; }
 
-            TelegramUser user = messageObject.getFrom();
-            String originalString = cfg.getStrings().toMinecraftMessage
-                    .replace("{first}", messageObject.getFrom().getFirstName())
-                    .replace("{last}", messageObject.getFrom().getLastName())
-                    .replace("{text}", messageObject.getText())
-                    .replace("{thread_id}", String.valueOf(messageThreadId))
-                    .replace("{message_to_reply}", String.valueOf(messageObject.getMessageId()));
+            String originalString = formatToMinecraftMessage(cfg, messageObject, messageThreadId);
 
             if (!is_reply_null && !messageObject.getReplyToMessage().getMessageId().equals(messageThreadId)) {
-                TelegramMessage reply = messageObject.getReplyToMessage();
-                String replyString = cfg.getStrings().toMinecraftReplyMessage
-                        .replace("{first}", reply.getFrom().getFirstName())
-                        .replace("{last}", reply.getFrom().getLastName())
-                        .replace("{text}", reply.getText());
-                originalString = String.format("%s\n%s", replyString,originalString);
+                originalString = formatToMinecraftReplyMessage(cfg, messageObject) + "\n" + originalString;
             }
             final Component textComponent = MiniMessage.miniMessage().deserialize(originalString);
             optServer.get().sendMessage(textComponent);

@@ -19,7 +19,7 @@ public class Config {
     private ArrayList<Long> operatorList = new ArrayList<>();
 
 
-
+    private boolean logTelegramRequests = false;
     private boolean logPlayerConnectionsToLogThread = false; // если false - логироваться подключения отключения в канал сервера
     private final HashMap<String, Long> Servers = new HashMap<>(); // ServerName <-> Forum Thread ID
 
@@ -108,5 +108,13 @@ public class Config {
 
     public void setLogPlayerConnectionsToLogThread(boolean logPlayerConnectionsToLogThread) {
         this.logPlayerConnectionsToLogThread = logPlayerConnectionsToLogThread;
+    }
+
+    public boolean isLogTelegramRequests() {
+        return logTelegramRequests;
+    }
+
+    public void setLogTelegramRequests(boolean logTelegramRequests) {
+        this.logTelegramRequests = logTelegramRequests;
     }
 }

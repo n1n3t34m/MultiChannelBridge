@@ -37,11 +37,12 @@ public class TelegramSender {
     }
     public JSONObject method(String method, String args) throws ParseException, IOException, InterruptedException{
         var uri = api_url.formatted(token, method, args);
+        var bridge = TelegramBridge.getInstance();
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(uri))
                 .build();
         HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
-        TelegramBridge.getInstance().getLogger().info("%d %s ".formatted(resp.statusCode(), method));
+        if (bridge.getConfig().isLogTelegramRequests()) bridge.getLogger().info("%d %s ".formatted(resp.statusCode(), method));
         return (JSONObject) parser.parse(resp.body());
 
     }

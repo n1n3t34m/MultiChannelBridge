@@ -79,7 +79,7 @@ public class TelegramListener implements Runnable {
             var encoded = urlEncodeUTF8(args);
             String api_url = "https://api.telegram.org/bot%s/%s?%s";
             var uri = api_url.formatted(token, "getUpdates", encoded);
-            TelegramBridge.getInstance().getLogger().info(uri.replace(token, "<TOKEN>"));
+            if (config.isLogTelegramRequests()) logger.info(uri.replace(token, "<TOKEN>"));
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(uri))
                     .build();
