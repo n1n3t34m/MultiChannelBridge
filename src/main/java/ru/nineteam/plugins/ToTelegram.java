@@ -50,11 +50,9 @@ public class ToTelegram {
         }
 
     }
-
     @Subscribe
     public void onServerConnected(ServerConnectedEvent event) {
         var config = TelegramBridge.getInstance().getConfig();
-
         if (!TelegramBridge.getInstance().getRunning()) {
             return;
         }

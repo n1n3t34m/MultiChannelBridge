@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -41,10 +42,18 @@ public class TelegramSender {
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(uri))
                 .build();
-        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
-        if (bridge.getConfig().isLogTelegramRequests()) bridge.getLogger().info("%d %s ".formatted(resp.statusCode(), method));
-        return (JSONObject) parser.parse(resp.body());
-
+//        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+        var resp = client.sendAsync(req, HttpResponse.BodyHandlers.ofString());
+        AtomicReference<JSONObject> respString = new AtomicReference<>();
+        resp.thenApply(HttpResponse::body).thenAccept(body -> {
+            if (bridge.getConfig().isLogTelegramRequests()) bridge.getLogger().info("%d %s ".formatted(0, method));
+            try {
+                respString.set((JSONObject) parser.parse(body));
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        return respString.get();
     }
 
     public JSONObject sendMessage(long chatId, String message, String parse_mode, Long reply_to_message_id) throws ParseException, IOException, InterruptedException {

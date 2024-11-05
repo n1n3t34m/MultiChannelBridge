@@ -106,7 +106,7 @@ public class TelegramBridge {
         this.logger = logger;
         logger.info(String.valueOf(dataDirectory.toAbsolutePath()));
         createOrLoadConfig();
-        if (config.getTelegramToken().equals("")) {
+        if (config.getTelegramToken().isEmpty()) {
             logger.warn("Telegram Token not set; Stopping");
             return;
         }
