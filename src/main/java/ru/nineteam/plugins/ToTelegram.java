@@ -146,9 +146,9 @@ public class ToTelegram {
 
     @Subscribe(order = PostOrder.LAST)
     public void onPlayerChat(PlayerChatEvent event) {
-        if (!TelegramBridge.getInstance().getRunning()) {
-            return;
-        }
+        if (!event.getResult().isAllowed()) return;
+        if (!TelegramBridge.getInstance().getRunning()) return;
+
         Optional<ServerConnection> fromServer = event.getPlayer().getCurrentServer();
         if (fromServer.isEmpty()) {
             return;

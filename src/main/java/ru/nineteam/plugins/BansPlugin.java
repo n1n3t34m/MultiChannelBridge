@@ -178,8 +178,11 @@ public class BansPlugin implements IMessageReceiver {
 
         if(omnibus==null||libertyBans==null)init();
         List<String> args = messageObject.getArgs();
-
-
+        var opList =  TelegramBridge.getInstance().getConfig().getOperatorList(); // operators id
+        var userId = messageObject.getFrom().getId(); // user id
+        if (!opList.contains(userId)) { // if user id not in operators id
+            return true;
+        }
         switch (cmd) {
             case "/ban" -> {
                 if (args.size() < 2) {
